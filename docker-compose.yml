@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecoloptim-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecoloptim_instalpro
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ecoloptim-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: ecoloptim-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ecoloptim_instalpro
+      DB_USER: postgres
+      DB_PASSWORD: postgres123
+      JWT_SECRET: schimba_acest_secret_cu_ceva_foarte_lung_minim_32_caractere_2024
+      JWT_EXPIRE: 7d
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_pdfs:/app/generated-pdfs
+      - backend_backups:/app/backups
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecoloptim-network
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: ecoloptim-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ecoloptim-network
+
+volumes:
+  postgres_data:
+    name: ecoloptim_postgres_data
+  backend_uploads:
+    name: ecoloptim_uploads
+  backend_pdfs:
+    name: ecoloptim_pdfs
+  backend_backups:
+    name: ecoloptim_backups
+
+networks:
+  ecoloptim-network:
+    name: ecoloptim_network
+    driver: bridge
