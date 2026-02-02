@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Authentication API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #2196F3;
+            border-bottom: 2px solid #2196F3;
+            padding-bottom: 10px;
+        }
+        input, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        .response {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            border-left: 4px solid #2196F3;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            border-left-color: #4CAF50;
+            background: #E8F5E9;
+        }
+        .error {
+            border-left-color: #f44336;
+            background: #FFEBEE;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #2196F3;">🔐 Test Authentication API</h1>
+
+    <!-- REGISTER -->
+    <div class="container">
+        <h2>📝 Register (Creare cont)</h2>
+        <form id="registerForm">
+            <label>Username:</label>
+            <input type="text" id="reg_username" placeholder="mihai" required>
+            
+            <label>Email:</label>
+            <input type="email" id="reg_email" placeholder="mihai@example.com" required>
+            
+            <label>Parola (minim 6 caractere):</label>
+            <input type="password" id="reg_parola" placeholder="parola123" required>
+            
+            <label>Nume complet:</label>
+            <input type="text" id="reg_nume_complet" placeholder="Mihai Popescu" required>
+            
+            <label>Telefon:</label>
+            <input type="text" id="reg_telefon" placeholder="0721234567">
+            
+            <label>Rol:</label>
+            <select id="reg_rol" style="padding: 10px; width: 100%;">
+                <option value="user">User</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+            </select>
+            
+            <button type="submit">Register</button>
+        </form>
+        <div id="registerResponse" class="response" style="display: none;"></div>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="container">
+        <h2>🔑 Login (Autentificare)</h2>
+        <form id="loginForm">
+            <label>Username:</label>
+            <input type="text" id="login_username" placeholder="mihai" required>
+            
+            <label>Parola:</label>
+            <input type="password" id="login_parola" placeholder="parola123" required>
+            
+            <button type="submit">Login</button>
+        </form>
+        <div id="loginResponse" class="response" style="display: none;"></div>
+    </div>
+
+    <!-- GET PROFILE -->
+    <div class="container">
+        <h2>👤 Get Profile (necesită token de la login)</h2>
+        <label>Token JWT (copiază din Login response):</label>
+        <input type="text" id="profile_token" placeholder="Paste token here...">
+        <button onclick="getProfile()">Get Profile</button>
+        <div id="profileResponse" class="response" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api/auth';
+
+        // REGISTER
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                username: document.getElementById('reg_username').value,
+                email: document.getElementById('reg_email').value,
+                parola: document.getElementById('reg_parola').value,
+                nume_complet: document.getElementById('reg_nume_complet').value,
+                telefon: document.getElementById('reg_telefon').value,
+                rol: document.getElementById('reg_rol').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('registerResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response ' + (result.success ? 'success' : 'error');
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+
+                if (result.success) {
+                    alert('✅ Cont creat cu succes! Token: ' + result.data.token);
+                    document.getElementById('registerForm').reset();
+                }
+            } catch (error) {
+                const responseDiv = document.getElementById('registerResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+                responseDiv.textContent = 'ERROR: ' + error.message;
+            }
+        });
+
+        // LOGIN
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                username: document.getElementById('login_username').value,
+                parola: document.getElementById('login_parola').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('loginResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response ' + (result.success ? 'success' : 'error');
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+
+                if (result.success) {
+                    alert('✅ Login SUCCESS! Copiază token-ul pentru Get Profile!');
+                    document.getElementById('profile_token').value = result.data.token;
+                }
+            } catch (error) {
+                const responseDiv = document.getElementById('loginResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+                responseDiv.textContent = 'ERROR: ' + error.message;
+            }
+        });
+
+        // GET PROFILE
+        async function getProfile() {
+            const token = document.getElementById('profile_token').value;
+
+            if (!token) {
+                alert('❌ Introdu token JWT mai întâi!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+                const responseDiv = document.getElementById('profileResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response ' + (result.success ? 'success' : 'error');
+                responseDiv.textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                const responseDiv = document.getElementById('profileResponse');
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+                responseDiv.textContent = 'ERROR: ' + error.message;
+            }
+        }
+    </script>
+<!-- TEST CLIENTI API -->
+<div class="container">
+    <h2>👥 Test API Clienți</h2>
+    
+    <label>Token JWT (din Login):</label>
+    <input type="text" id="clienti_token" placeholder="Paste token...">
+    
+    <button onclick="getClienti()">GET Clienți</button>
+    <button onclick="createClient()">POST Creare Client Test</button>
+    
+    <div id="clientiResponse" class="response" style="display: none;"></div>
+</div>
+
+<script>
+function getClienti() {
+    const token = document.getElementById('clienti_token').value;
+    if (!token) {
+        alert('Introdu token mai întâi!');
+        return;
+    }
+
+    fetch('http://localhost:5000/api/clienti', {
+        headers: { 'Authorization': `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        const div = document.getElementById('clientiResponse');
+        div.style.display = 'block';
+        div.className = 'response ' + (data.success ? 'success' : 'error');
+        div.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+        const div = document.getElementById('clientiResponse');
+        div.style.display = 'block';
+        div.className = 'response error';
+        div.textContent = 'ERROR: ' + err.message;
+    });
+}
+
+function createClient() {
+    const token = document.getElementById('clienti_token').value;
+    if (!token) {
+        alert('Introdu token mai întâi!');
+        return;
+    }
+
+    const clientData = {
+        nume: 'SC Test Client SRL',
+        tip_client: 'firma',
+        cui_cnp: 'RO12345678',
+        adresa: 'Str. Exemplu nr. 10',
+        localitate: 'București',
+        judet: 'București',
+        telefon: '0721111222',
+        email: 'contact@testclient.ro',
+        persoana_contact: 'Maria Ionescu'
+    };
+
+    fetch('http://localhost:5000/api/clienti', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(clientData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        const div = document.getElementById('clientiResponse');
+        div.style.display = 'block';
+        div.className = 'response ' + (data.success ? 'success' : 'error');
+        div.textContent = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+        const div = document.getElementById('clientiResponse');
+        div.style.display = 'block';
+        div.className = 'response error';
+        div.textContent = 'ERROR: ' + err.message;
+    });
+}
+</script>    
+</body>
+</html>

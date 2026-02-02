@@ -1,29 +1,30 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import App from './App';
+import { createGlobalStyle } from 'styled-components';
 
-function App() {
-  return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif',
-      backgroundColor: '#f3f4f6'
-    }}>
-      <h1 style={{ fontSize: '3rem', color: '#2563eb', marginBottom: '1rem' }}>
-        🏗️ Ecoloptim InstalPro
-      </h1>
-      <p style={{ fontSize: '1.5rem', color: '#6b7280' }}>
-        Aplicația funcționează!
-      </p>
-      <p style={{ marginTop: '2rem', color: '#9ca3af' }}>
-        Version 1.0.0
-      </p>
-    </div>
-  );
-}
+const GlobalStyle = createGlobalStyle`
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+  }
+`;
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <GlobalStyle />
+    <App />
+  </React.StrictMode>
+);
