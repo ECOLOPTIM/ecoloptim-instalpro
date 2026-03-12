@@ -3,6 +3,9 @@ const jwt = require('jsonwebtoken');
 if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
   throw new Error('JWT_SECRET must be set in production');
 }
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET not set - using default insecure key. Set JWT_SECRET in your environment.');
+}
 const JWT_SECRET = process.env.JWT_SECRET || 'ecoloptim-secret-key-2024-super-secure';
 
 const authMiddleware = (req, res, next) => {
