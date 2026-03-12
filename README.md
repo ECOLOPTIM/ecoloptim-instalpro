@@ -117,13 +117,36 @@ cd ecoloptim-instalpro
 
 ### Pasul 3 — Pornește aplicația
 
+> 📂 **Unde găsesc `start.bat` / `start.sh`?**  
+> Fișierele se află în **folderul rădăcină** al proiectului — adică direct în `ecoloptim-instalpro/`, nu în niciun subfolder.  
+> Dacă ai clonat corect (Pasul 2), structura arată așa:
+> ```
+> ecoloptim-instalpro/       ← deschide acest folder
+> ├── start.bat              ← 🪟 Windows: dublu-click aici
+> ├── start.sh               ← 🍎 macOS / 🐧 Linux: rulează acest fișier
+> ├── docker-compose.yml
+> ├── backend/
+> └── frontend/
+> ```
+
 #### 🪟 Windows — dublu-click pe `start.bat`
+
+1. Deschide **File Explorer** (Explorer de fișiere)
+2. Navighează în folderul `ecoloptim-instalpro`
+3. Fă **dublu-click** pe `start.bat`
+4. Dacă apare un dialog „Windows a protejat PC-ul" → apasă **Mai multe informații → Rulați oricum**
+
 ```
 start.bat
 ```
 
 #### 🍎 macOS / 🐧 Linux — rulează `start.sh`
+
 ```bash
+# Asigură-te că ești în folderul proiectului
+cd ecoloptim-instalpro
+
+# Rulează scriptul de pornire
 bash start.sh
 ```
 
@@ -260,23 +283,26 @@ psql -U postgres -d ecoloptim_instalpro -f backend/database-schema.sql
 
 ## 📁 Structura proiectului
 
+> 💡 **`start.bat` și `start.sh` se află direct în folderul `ecoloptim-instalpro/`** — folderul care se creează după clonare.
+
 ```
-ecoloptim-instalpro/
-├── start.sh              # Script pornire Linux/macOS
-├── start.bat             # Script pornire Windows
-├── docker-compose.yml    # Configurare Docker
+ecoloptim-instalpro/          ← folderul principal (creat de git clone)
+├── start.bat                 ← 🪟 Script pornire Windows (dublu-click)
+├── start.sh                  ← 🍎🐧 Script pornire macOS/Linux (bash start.sh)
+├── docker-compose.yml        # Configurare Docker
+├── README.md                 # Această documentație
 ├── backend/
-│   ├── server.js         # Entry point API
-│   ├── controllers/      # Logica business
-│   ├── routes/           # Rute API
-│   ├── middleware/        # Auth, validare
-│   ├── config/           # Configurare DB
+│   ├── server.js             # Entry point API
+│   ├── controllers/          # Logica business
+│   ├── routes/               # Rute API
+│   ├── middleware/           # Auth, validare
+│   ├── config/               # Configurare DB
 │   └── database-schema.sql
 └── frontend/
     ├── src/
-    │   ├── pages/        # Pagini aplicație
-    │   ├── components/   # Componente reutilizabile
-    │   ├── context/      # State management
-    │   └── services/     # API calls
+    │   ├── pages/            # Pagini aplicație
+    │   ├── components/       # Componente reutilizabile
+    │   ├── context/          # State management
+    │   └── services/         # API calls
     └── nginx.conf
 ```
