@@ -178,3 +178,59 @@ exports.getProfile = async (req, res) => {
     });
   }
 };
+
+// PUT /api/auth/profile - Actualizare profil
+exports.updateProfile = async (req, res) => {
+  try {
+    const { nume_complet, email, telefon } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Emailul este obligatoriu.' });
+    }
+
+    // Check email uniqueness (excluding current user)
+    const emailCheck = await pool.query(
+      'SELECT id FROM utilizatori WHERE email = $1 AND id != $2',
+      [email, req.user.id]
+    );
+    if (emailCheck.rows.length > 0) {
+      return res.status(400).json({ success: false, message: 'Acest email este deja folosit de alt utilizator.' });
+    }
+
+    const result = await pool.query(
+      `UPDATE utilizatori SET nume_complet=$1, email=$2, telefon=$3, actualizat_la=CURRENT_TIMESTAMP
+       WHERE id=$4
+       RETURNING id, username, email, rol, nume_complet, telefon`,
+      [nume_complet || null, email, telefon || null, req.user.id]
+    );
+
+    res.json({ success: true, message: 'Profil actualizat cu succes!', data: result.rows[0] });
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, message: 'Eroare la actualizarea profilului.', error: error.message });
+  }
+};
+
+// PUT /api/auth/password - Schimbare parolă
+exports.updatePassword = async (req, res) => {
+  try {
+    const { parola_noua } = req.body;
+
+    if (!parola_noua || parola_noua.length < 6) {
+      return res.status(400).json({ success: false, message: 'Parola trebuie să aibă minim 6 caractere.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const parola_hash = await bcrypt.hash(parola_noua, salt);
+
+    await pool.query(
+      'UPDATE utilizatori SET parola_hash=$1, actualizat_la=CURRENT_TIMESTAMP WHERE id=$2',
+      [parola_hash, req.user.id]
+    );
+
+    res.json({ success: true, message: 'Parola a fost schimbată cu succes!' });
+  } catch (error) {
+    console.error('Update password error:', error);
+    res.status(500).json({ success: false, message: 'Eroare la schimbarea parolei.', error: error.message });
+  }
+};

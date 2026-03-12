@@ -2,20 +2,10 @@
 -- ECOLOPTIM INSTALPRO - DATABASE SCHEMA
 -- ============================================
 
--- Drop tables if exist (pentru re-run)
-DROP TABLE IF EXISTS costuri CASCADE;
-DROP TABLE IF EXISTS documente CASCADE;
-DROP TABLE IF EXISTS fotografii_santier CASCADE;
-DROP TABLE IF EXISTS lucrari CASCADE;
-DROP TABLE IF EXISTS clienti CASCADE;
-DROP TABLE IF EXISTS materiale CASCADE;
-DROP TABLE IF EXISTS angajati CASCADE;
-DROP TABLE IF EXISTS utilizatori CASCADE;
-
 -- ============================================
 -- TABELA: utilizatori (authentication)
 -- ============================================
-CREATE TABLE utilizatori (
+CREATE TABLE IF NOT EXISTS utilizatori (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -31,7 +21,7 @@ CREATE TABLE utilizatori (
 -- ============================================
 -- TABELA: clienti
 -- ============================================
-CREATE TABLE clienti (
+CREATE TABLE IF NOT EXISTS clienti (
     id SERIAL PRIMARY KEY,
     nume VARCHAR(100) NOT NULL,
     tip_client VARCHAR(20) CHECK (tip_client IN ('persoana_fizica', 'firma')),
@@ -53,7 +43,7 @@ CREATE TABLE clienti (
 -- ============================================
 -- TABELA: lucrari (projects)
 -- ============================================
-CREATE TABLE lucrari (
+CREATE TABLE IF NOT EXISTS lucrari (
     id SERIAL PRIMARY KEY,
     numar_lucrare VARCHAR(50) UNIQUE NOT NULL,
     nume_lucrare VARCHAR(200) NOT NULL,
@@ -78,7 +68,7 @@ CREATE TABLE lucrari (
 -- ============================================
 -- TABELA: materiale
 -- ============================================
-CREATE TABLE materiale (
+CREATE TABLE IF NOT EXISTS materiale (
     id SERIAL PRIMARY KEY,
     cod_material VARCHAR(50) UNIQUE,
     nume VARCHAR(200) NOT NULL,
@@ -98,7 +88,7 @@ CREATE TABLE materiale (
 -- ============================================
 -- TABELA: angajati
 -- ============================================
-CREATE TABLE angajati (
+CREATE TABLE IF NOT EXISTS angajati (
     id SERIAL PRIMARY KEY,
     nume_complet VARCHAR(100) NOT NULL,
     cnp VARCHAR(13) UNIQUE,
@@ -118,7 +108,7 @@ CREATE TABLE angajati (
 -- ============================================
 -- TABELA: costuri (cheltuieli per lucrare)
 -- ============================================
-CREATE TABLE costuri (
+CREATE TABLE IF NOT EXISTS costuri (
     id SERIAL PRIMARY KEY,
     lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
     tip_cost VARCHAR(50) CHECK (tip_cost IN ('materiale', 'manopera', 'transport', 'utilaje', 'subcontractori', 'altele')),
@@ -135,7 +125,7 @@ CREATE TABLE costuri (
 -- ============================================
 -- TABELA: documente (PV-uri, facturi, contracte)
 -- ============================================
-CREATE TABLE documente (
+CREATE TABLE IF NOT EXISTS documente (
     id SERIAL PRIMARY KEY,
     lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
     tip_document VARCHAR(50) CHECK (tip_document IN ('contract', 'proces_verbal', 'factura', 'deviz', 'autorizatie', 'altele')),
@@ -151,7 +141,7 @@ CREATE TABLE documente (
 -- ============================================
 -- TABELA: fotografii_santier
 -- ============================================
-CREATE TABLE fotografii_santier (
+CREATE TABLE IF NOT EXISTS fotografii_santier (
     id SERIAL PRIMARY KEY,
     lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
     cale_fisier VARCHAR(500) NOT NULL,
@@ -173,10 +163,10 @@ CREATE INDEX idx_fotografii_lucrare ON fotografii_santier(lucrare_id);
 
 -- ============================================
 -- USER ADMIN DEFAULT (password: admin123)
--- Hash-ul e pentru "admin123" cu bcrypt
 -- ============================================
 INSERT INTO utilizatori (username, email, parola_hash, rol, nume_complet) 
-VALUES ('admin', 'admin@ecoloptim.ro', '$2b$10$xZqKXzGZp7bUY5M2pX0qZO6KXJKmRxZ.aJqKkP8X0qZO6KXJKmRxZ', 'admin', 'Administrator');
+VALUES ('admin', 'admin@ecoloptim.ro', '$2a$10$8Q4L4EYY4fg/AHlz.vnUseJm9NiJEQRVS3hiqsFghcJp2IRjgspOu', 'admin', 'Administrator')
+ON CONFLICT (username) DO NOTHING;
 
 -- ============================================
 -- DATE DE TEST (opțional)
@@ -184,12 +174,15 @@ VALUES ('admin', 'admin@ecoloptim.ro', '$2b$10$xZqKXzGZp7bUY5M2pX0qZO6KXJKmRxZ.a
 
 -- Client test
 INSERT INTO clienti (nume, tip_client, telefon, email, adresa, localitate, judet, creat_de)
-VALUES ('SC Test Construct SRL', 'firma', '0721234567', 'test@construct.ro', 'Str. Exemplu nr. 1', 'București', 'București', 1);
+SELECT 'SC Test Construct SRL', 'firma', '0721234567', 'test@construct.ro', 'Str. Exemplu nr. 1', 'București', 'București', 1
+WHERE NOT EXISTS (SELECT 1 FROM clienti WHERE email = 'test@construct.ro');
 
 -- Material test
 INSERT INTO materiale (cod_material, nume, categorie, unitate_masura, pret_achizitie, pret_vanzare, stoc_curent)
-VALUES ('MAT001', 'Țeavă PVC D110', 'Instalații', 'ml', 15.50, 25.00, 100);
+VALUES ('MAT001', 'Țeavă PVC D110', 'Instalații', 'ml', 15.50, 25.00, 100)
+ON CONFLICT (cod_material) DO NOTHING;
 
 -- Angajat test
 INSERT INTO angajati (nume_complet, functie, telefon, data_angajare, salariu_baza)
-VALUES ('Ion Popescu', 'Instalator', '0723456789', '2024-01-15', 3500.00);
+SELECT 'Ion Popescu', 'Instalator', '0723456789', '2024-01-15', 3500.00
+WHERE NOT EXISTS (SELECT 1 FROM angajati WHERE telefon = '0723456789');
