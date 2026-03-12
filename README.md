@@ -4,6 +4,90 @@ Aplicație web pentru managementul lucrărilor de instalații — clienți, lucr
 
 ---
 
+## 📥 Cum clonez proiectul?
+
+### Cerință prealabilă — Instalează Git
+
+Git este programul care descarcă (clonează) codul sursă de pe GitHub pe calculatorul tău.
+
+| Sistem de operare | Link descărcare |
+|-------------------|----------------|
+| 🪟 Windows | https://git-scm.com/download/win — rulează installerul, lasă opțiunile implicite |
+| 🍎 macOS | `xcode-select --install` în Terminal (Git vine cu Xcode tools) sau https://git-scm.com/download/mac |
+| 🐧 Linux (Ubuntu/Debian) | `sudo apt install git` |
+| 🐧 Linux (Fedora/RHEL) | `sudo dnf install git` |
+
+Verifică instalarea:
+```bash
+git --version
+# ar trebui să afișeze ceva de genul: git version 2.x.x
+```
+
+---
+
+### Metoda 1 — HTTPS (recomandat, cel mai simplu)
+
+```bash
+# 1. Deschide Terminal (macOS/Linux) sau Command Prompt / PowerShell (Windows)
+
+# 2. Mergi în folderul unde vrei să descarci proiectul
+cd C:\Proiecte          # Windows
+# sau
+cd ~/Proiecte           # macOS / Linux
+
+# 3. Clonează repository-ul
+git clone https://github.com/ECOLOPTIM/ecoloptim-instalpro.git
+
+# 4. Intră în folderul proiectului
+cd ecoloptim-instalpro
+```
+
+> 💡 Nu îți va cere username/parolă deoarece repository-ul este public.
+
+---
+
+### Metoda 2 — SSH (pentru colaboratori cu cheie SSH configurată)
+
+```bash
+git clone git@github.com:ECOLOPTIM/ecoloptim-instalpro.git
+cd ecoloptim-instalpro
+```
+
+> Această metodă necesită o cheie SSH adăugată în contul tău GitHub.  
+> Documentație: https://docs.github.com/en/authentication/connecting-to-github-with-ssh
+
+---
+
+### Metoda 3 — GitHub Desktop (interfață grafică, fără terminal)
+
+1. Descarcă și instalează **GitHub Desktop**: https://desktop.github.com/
+2. Deschide GitHub Desktop → **File → Clone repository...**
+3. Selectează tab-ul **URL** și introdu:
+   ```
+   https://github.com/ECOLOPTIM/ecoloptim-instalpro
+   ```
+4. Alege folderul local → apasă **Clone**
+
+---
+
+### Metoda 4 — Descarcă ZIP (fără Git instalat)
+
+1. Accesează https://github.com/ECOLOPTIM/ecoloptim-instalpro
+2. Apasă butonul verde **`< > Code`**
+3. Apasă **Download ZIP**
+4. Dezarhivează fișierul `.zip` descărcat
+
+> ⚠️ Cu această metodă nu poți face `git pull` pentru actualizări viitoare.  
+> Dacă vrei actualizări automate, folosește Metoda 1 (HTTPS).
+
+---
+
+### Pasul următor după clonare
+
+➡️ Continuă cu **[Cum deschid aplicația?](#-cum-deschid-aplicatia)** de mai jos.
+
+---
+
 ## 🚀 Cum deschid aplicația?
 
 ### Pasul 1 — Instalează Docker Desktop
@@ -22,12 +106,12 @@ Instalează, pornește Docker Desktop și așteaptă iconița 🐳 din bara de a
 
 ### Pasul 2 — Descarcă aplicația
 
+> Dacă nu ai clonat încă proiectul, urmează pașii din **[Cum clonez proiectul?](#-cum-clonez-proiectul)** de mai sus.
+
 ```bash
 git clone https://github.com/ECOLOPTIM/ecoloptim-instalpro.git
 cd ecoloptim-instalpro
 ```
-
-Sau descarcă ZIP din GitHub → **Code → Download ZIP** → dezarhivează.
 
 ---
 
