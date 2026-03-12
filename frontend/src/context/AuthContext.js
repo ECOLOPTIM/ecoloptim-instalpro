@@ -35,22 +35,15 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      console.log('🔐 AuthContext: Attempting login:', username);
-      console.log('📡 AuthContext: API baseURL:', api.defaults.baseURL);
-      
       const response = await api.post('/auth/login', { username, password });
-      console.log('✅ AuthContext: Response received:', response.data);
-      
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
       setUser(userData);
       
-      console.log('✅ AuthContext: User set, returning success');
       return { success: true, user: userData };
     } catch (error) {
-      console.error('❌ AuthContext: Login error:', error);
-      console.error('❌ AuthContext: Error response:', error.response?.data);
+      console.error('❌ AuthContext: Login error:', error.response?.data);
       return { 
         success: false, 
         message: error.response?.data?.message || 'Eroare la autentificare' 

@@ -13,7 +13,7 @@ const getDocumenteByLucrare = async (req, res) => {
         u.username as uploaded_by_username,
         u.nume_complet as uploaded_by_name
       FROM documente d
-      LEFT JOIN users u ON d.uploaded_by = u.id
+      LEFT JOIN utilizatori u ON d.uploaded_by = u.id
       WHERE d.lucrare_id = $1
       ORDER BY d.created_at DESC`,
       [lucrare_id]
@@ -41,7 +41,7 @@ const getAllDocumente = async (req, res) => {
       FROM documente d
       LEFT JOIN lucrari l ON d.lucrare_id = l.id
       LEFT JOIN clienti c ON l.client_id = c.id
-      LEFT JOIN users u ON d.uploaded_by = u.id
+      LEFT JOIN utilizatori u ON d.uploaded_by = u.id
       WHERE 1=1
     `;
 

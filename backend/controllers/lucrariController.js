@@ -95,7 +95,7 @@ const getLucrareById = async (req, res) => {
         u.username,
         u.nume_complet
       FROM timeline_lucrari t
-      LEFT JOIN users u ON t.user_id = u.id
+      LEFT JOIN utilizatori u ON t.user_id = u.id
       WHERE t.lucrare_id = $1
       ORDER BY t.created_at DESC`,
       [id]

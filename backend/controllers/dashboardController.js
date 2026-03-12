@@ -33,9 +33,9 @@ const getDashboardStats = async (req, res) => {
     const facturiResult = await db.query(`
       SELECT 
         COUNT(*) as numar_facturi_neincasate,
-        COALESCE(SUM(valoare_totala - valoare_incasata), 0) as valoare_neincasata
+        COALESCE(SUM(valoare_totala - valoare_platita), 0) as valoare_neincasata
       FROM facturi
-      WHERE status IN ('emisa', 'incasata_partial')
+      WHERE status IN ('neincasata', 'partial_incasata')
     `);
 
     // Venit luna curentă

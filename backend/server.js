@@ -1,12 +1,38 @@
 const express = require('express');
 const cors = require('cors');
+const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000'];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
+
+// Rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20,
+  message: { message: 'Prea multe cereri. Încearcă din nou mai târziu.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  message: { message: 'Prea multe cereri. Încearcă din nou mai târziu.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -16,12 +42,12 @@ app.get('/health', (req, res) => {
 });
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/clienti', require('./routes/clienti'));
-app.use('/api/lucrari', require('./routes/lucrari'));
-app.use('/api/documente', require('./routes/documente'));
-app.use('/api/facturi', require('./routes/facturi'));
-app.use('/api/dashboard', require('./routes/dashboard'));
+app.use('/api/auth', authLimiter, require('./routes/auth'));
+app.use('/api/clienti', apiLimiter, require('./routes/clienti'));
+app.use('/api/lucrari', apiLimiter, require('./routes/lucrari'));
+app.use('/api/documente', apiLimiter, require('./routes/documente'));
+app.use('/api/facturi', apiLimiter, require('./routes/facturi'));
+app.use('/api/dashboard', apiLimiter, require('./routes/dashboard'));
 
 // Error handler
 app.use((err, req, res, next) => {
