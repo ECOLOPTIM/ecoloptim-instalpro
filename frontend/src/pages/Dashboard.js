@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import styled from 'styled-components';
+import api from '../services/api';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -10,16 +11,22 @@ const Dashboard = () => {
     materiale: 0,
     angajati: 0
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch real stats from API
-    // Deocamdată folosim date mock
-    setStats({
-      clienti: 15,
-      lucrari: 8,
-      materiale: 42,
-      angajati: 6
-    });
+    const fetchStats = async () => {
+      try {
+        const response = await api.get('/stats');
+        if (response.data.success) {
+          setStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    fetchStats();
   }, []);
 
   return (
@@ -31,26 +38,26 @@ const Dashboard = () => {
 
       <StatsGrid>
         <StatCard color="#4CAF50">
-          <StatIcon>���</StatIcon>
-          <StatNumber>{stats.clienti}</StatNumber>
+          <StatIcon>👥</StatIcon>
+          <StatNumber>{statsLoading ? '...' : stats.clienti}</StatNumber>
           <StatLabel>Clienți activi</StatLabel>
         </StatCard>
 
         <StatCard color="#2196F3">
           <StatIcon>🏗️</StatIcon>
-          <StatNumber>{stats.lucrari}</StatNumber>
+          <StatNumber>{statsLoading ? '...' : stats.lucrari}</StatNumber>
           <StatLabel>Lucrări în curs</StatLabel>
         </StatCard>
 
         <StatCard color="#FF9800">
           <StatIcon>📦</StatIcon>
-          <StatNumber>{stats.materiale}</StatNumber>
+          <StatNumber>{statsLoading ? '...' : stats.materiale}</StatNumber>
           <StatLabel>Materiale în stoc</StatLabel>
         </StatCard>
 
         <StatCard color="#9C27B0">
           <StatIcon>👷</StatIcon>
-          <StatNumber>{stats.angajati}</StatNumber>
+          <StatNumber>{statsLoading ? '...' : stats.angajati}</StatNumber>
           <StatLabel>Angajați</StatLabel>
         </StatCard>
       </StatsGrid>

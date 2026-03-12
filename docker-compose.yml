@@ -10,6 +10,7 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/database-schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     ports:
       - "5432:5432"
     networks:
@@ -35,6 +36,7 @@ services:
       DB_PASSWORD: postgres123
       JWT_SECRET: schimba_acest_secret_cu_ceva_foarte_lung_minim_32_caractere_2024
       JWT_EXPIRE: 7d
+      CORS_ORIGIN: http://localhost
     volumes:
       - backend_uploads:/app/uploads
       - backend_pdfs:/app/generated-pdfs

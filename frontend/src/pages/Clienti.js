@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { toast } from 'react-toastify';
 import api from '../services/api';
 
 const Clienti = () => {
@@ -37,7 +38,7 @@ const Clienti = () => {
       }
     } catch (error) {
       console.error('Error fetching clienti:', error);
-      alert('Eroare la încărcarea clienților: ' + (error.response?.data?.message || error.message));
+      toast.error('Eroare la încărcarea clienților: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -57,21 +58,21 @@ const Clienti = () => {
       if (editingClient) {
         const response = await api.put(`/clienti/${editingClient.id}`, formData);
         if (response.data.success) {
-          alert('Client actualizat cu succes!');
+          toast.success('Client actualizat cu succes!');
           fetchClienti();
           closeModal();
         }
       } else {
         const response = await api.post('/clienti', formData);
         if (response.data.success) {
-          alert('Client creat cu succes!');
+          toast.success('Client creat cu succes!');
           fetchClienti();
           closeModal();
         }
       }
     } catch (error) {
       console.error('Error saving client:', error);
-      alert(error.response?.data?.message || 'Eroare la salvarea clientului');
+      toast.error(error.response?.data?.message || 'Eroare la salvarea clientului');
     }
   };
 
@@ -101,12 +102,12 @@ const Clienti = () => {
     try {
       const response = await api.delete(`/clienti/${id}`);
       if (response.data.success) {
-        alert('Client șters cu succes!');
+        toast.success('Client șters cu succes!');
         fetchClienti();
       }
     } catch (error) {
       console.error('Error deleting client:', error);
-      alert('Eroare la ștergerea clientului');
+      toast.error('Eroare la ștergerea clientului');
     }
   };
 
@@ -260,6 +261,21 @@ const Clienti = () => {
                 <Input type="text" name="judet" value={formData.judet} onChange={handleInputChange} />
               </FormGroup>
 
+              <FormGroup>
+                <Label>Cod Poștal</Label>
+                <Input type="text" name="cod_postal" value={formData.cod_postal} onChange={handleInputChange} />
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Persoană Contact</Label>
+                <Input type="text" name="persoana_contact" value={formData.persoana_contact} onChange={handleInputChange} />
+              </FormGroup>
+
+              <FormGroup>
+                <Label htmlFor="observatii">Observații</Label>
+                <Textarea id="observatii" name="observatii" value={formData.observatii} onChange={handleInputChange} rows={3} />
+              </FormGroup>
+
               <FormActions>
                 <CancelButton type="button" onClick={closeModal}>Anulează</CancelButton>
                 <SubmitButton type="submit">
@@ -297,6 +313,7 @@ const FormGroup = styled.div`margin-bottom: 15px;`;
 const Label = styled.label`display: block; margin-bottom: 8px; font-weight: bold; color: #555;`;
 const Input = styled.input`width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; &:focus { outline: none; border-color: #667eea; }`;
 const Select = styled.select`width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; &:focus { outline: none; border-color: #667eea; }`;
+const Textarea = styled.textarea`width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; resize: vertical; font-family: inherit; &:focus { outline: none; border-color: #667eea; }`;
 const FormActions = styled.div`display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;`;
 const CancelButton = styled.button`padding: 12px 30px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; &:hover { background: #d0d0d0; }`;
 const SubmitButton = styled.button`padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; &:hover { transform: translateY(-2px); }`;
