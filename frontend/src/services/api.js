@@ -9,7 +9,7 @@ const api = axios.create({
   }
 });
 
-// Interceptor pentru adăugare automată token JWT
+// Request interceptor - add token
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -23,13 +23,12 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor pentru erori (logout dacă token expirat)
+// Response interceptor - handle errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      localStorage.removeItem('user');
       window.location.href = '/login';
     }
     return Promise.reject(error);

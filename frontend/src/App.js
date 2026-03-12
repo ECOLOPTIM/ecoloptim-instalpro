@@ -9,6 +9,12 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Clienti from './pages/Clienti';
+import ClientDetalii from './pages/ClientDetalii';
+import Lucrari from './pages/Lucrari';
+import LucrareDetalii from './pages/LucrareDetalii';
+import Documente from './pages/Documente';
+import Facturi from './pages/Facturi';
+import Calendar from './pages/Calendar';
 
 function App() {
   return (
@@ -20,44 +26,20 @@ function App() {
           <Route path="/register" element={<Register />} />
 
           {/* Protected routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
-              </PrivateRoute>
-            } 
-          />
-
-          <Route 
-            path="/clienti" 
-            element={
-              <PrivateRoute>
-                <Layout>
-                  <Clienti />
-                </Layout>
-              </PrivateRoute>
-            } 
-          />
-
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="clienti" element={<Clienti />} />
+            <Route path="clienti/:id" element={<ClientDetalii />} />
+            <Route path="lucrari" element={<Lucrari />} />
+            <Route path="lucrari/:id" element={<LucrareDetalii />} />
+            <Route path="documente" element={<Documente />} />
+            <Route path="facturi" element={<Facturi />} />
+            <Route path="calendar" element={<Calendar />} />
+          </Route>
 
           {/* 404 */}
-          <Route 
-            path="*" 
-            element={
-              <div style={{
-                padding: '50px', 
-                textAlign: 'center', 
-                fontSize: '24px'
-              }}>
-                404 - Pagina nu există
-              </div>
-            } 
-          />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

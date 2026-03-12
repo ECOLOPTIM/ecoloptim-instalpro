@@ -1,304 +1,422 @@
 import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { 
+  Plus, 
+  Search, 
+  Filter, 
+  Eye, 
+  Edit, 
+  Trash2,
+  Building2,
+  User,
+  Users,
+  X
+} from 'lucide-react';
+import './Pages.css';
 
 const Clienti = () => {
+  const navigate = useNavigate();
   const [clienti, setClienti] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filters, setFilters] = useState({
+    tip_client: '',
+    judet: '',
+    status: ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [formData, setFormData] = useState({
-    nume: '',
     tip_client: 'persoana_fizica',
-    cui_cnp: '',
-    adresa: '',
+    nume: '',
+    cui: '',
+    cnp: '',
+    reg_com: '',
+    telefon_primar: '',
+    telefon_secundar: '',
+    email: '',
+    adresa_strada: '',
+    adresa_numar: '',
+    adresa_bloc: '',
+    adresa_scara: '',
+    adresa_apartament: '',
     localitate: '',
     judet: '',
     cod_postal: '',
-    telefon: '',
-    email: '',
     persoana_contact: '',
-    observatii: ''
+    observatii: '',
+    status: 'activ'
   });
 
   useEffect(() => {
     fetchClienti();
-  }, [search]);
+  }, [search, filters]);
 
   const fetchClienti = async () => {
     try {
-      setLoading(true);
-      const response = await api.get('/clienti', {
-        params: { search }
-      });
-      if (response.data.success) {
-        setClienti(response.data.data);
-      }
+      const params = new URLSearchParams({
+        search,
+        ...filters
+      }).toString();
+      const response = await api.get(`/clienti?${params}`);
+      setClienti(response.data);
     } catch (error) {
       console.error('Error fetching clienti:', error);
-      alert('Eroare la încărcarea clienților: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleCreate = () => {
+    setEditingClient(null);
     setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
+      tip_client: 'persoana_fizica',
+      nume: '',
+      cui: '',
+      cnp: '',
+      reg_com: '',
+      telefon_primar: '',
+      telefon_secundar: '',
+      email: '',
+      adresa_strada: '',
+      adresa_numar: '',
+      adresa_bloc: '',
+      adresa_scara: '',
+      adresa_apartament: '',
+      localitate: '',
+      judet: '',
+      cod_postal: '',
+      persoana_contact: '',
+      observatii: '',
+      status: 'activ'
     });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      if (editingClient) {
-        const response = await api.put(`/clienti/${editingClient.id}`, formData);
-        if (response.data.success) {
-          alert('Client actualizat cu succes!');
-          fetchClienti();
-          closeModal();
-        }
-      } else {
-        const response = await api.post('/clienti', formData);
-        if (response.data.success) {
-          alert('Client creat cu succes!');
-          fetchClienti();
-          closeModal();
-        }
-      }
-    } catch (error) {
-      console.error('Error saving client:', error);
-      alert(error.response?.data?.message || 'Eroare la salvarea clientului');
-    }
+    setShowModal(true);
   };
 
   const handleEdit = (client) => {
     setEditingClient(client);
-    setFormData({
-      nume: client.nume || '',
-      tip_client: client.tip_client || 'persoana_fizica',
-      cui_cnp: client.cui_cnp || '',
-      adresa: client.adresa || '',
-      localitate: client.localitate || '',
-      judet: client.judet || '',
-      cod_postal: client.cod_postal || '',
-      telefon: client.telefon || '',
-      email: client.email || '',
-      persoana_contact: client.persoana_contact || '',
-      observatii: client.observatii || ''
-    });
+    setFormData(client);
     setShowModal(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingClient) {
+        await api.put(`/clienti/${editingClient.id}`, formData);
+      } else {
+        await api.post('/clienti', formData);
+      }
+      setShowModal(false);
+      fetchClienti();
+    } catch (error) {
+      console.error('Error saving client:', error);
+      alert(error.response?.data?.message || 'Eroare la salvare');
+    }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Sigur vrei să ștergi acest client?')) {
-      return;
-    }
-
+    if (!window.confirm('Sigur vrei să ștergi acest client?')) return;
+    
     try {
-      const response = await api.delete(`/clienti/${id}`);
-      if (response.data.success) {
-        alert('Client șters cu succes!');
-        fetchClienti();
-      }
+      await api.delete(`/clienti/${id}`);
+      fetchClienti();
     } catch (error) {
       console.error('Error deleting client:', error);
-      alert('Eroare la ștergerea clientului');
+      alert(error.response?.data?.message || 'Eroare la ștergere');
     }
   };
 
-  const openNewModal = () => {
-    setEditingClient(null);
-    setFormData({
-      nume: '',
-      tip_client: 'persoana_fizica',
-      cui_cnp: '',
-      adresa: '',
-      localitate: '',
-      judet: '',
-      cod_postal: '',
-      telefon: '',
-      email: '',
-      persoana_contact: '',
-      observatii: ''
-    });
-    setShowModal(true);
-  };
-
-  const closeModal = () => {
-    setShowModal(false);
-    setEditingClient(null);
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('ro-RO', {
+      style: 'currency',
+      currency: 'RON',
+      minimumFractionDigits: 0
+    }).format(value);
   };
 
   return (
-    <Container>
-      <Header>
-        <Title>👥 Clienți</Title>
-        <Actions>
-          <SearchBox
+    <div className="page">
+      <div className="page-header">
+        <div>
+          <h1>Clienți</h1>
+          <p>Gestionează baza de clienți</p>
+        </div>
+        <button className="btn btn-primary" onClick={handleCreate}>
+          <Plus size={20} />
+          Client Nou
+        </button>
+      </div>
+
+      {/* Search & Filters */}
+      <div className="page-toolbar">
+        <div className="search-box">
+          <Search size={20} />
+          <input
             type="text"
-            placeholder="🔍 Caută client..."
+            placeholder="Caută după nume, telefon, email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <AddButton onClick={openNewModal}>➕ Adaugă Client</AddButton>
-        </Actions>
-      </Header>
+        </div>
+        <button 
+          className="btn btn-secondary"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter size={20} />
+          Filtre
+        </button>
+      </div>
 
+      {showFilters && (
+        <div className="filters-panel">
+          <select
+            value={filters.tip_client}
+            onChange={(e) => setFilters({...filters, tip_client: e.target.value})}
+          >
+            <option value="">Toate tipurile</option>
+            <option value="persoana_fizica">Persoană Fizică</option>
+            <option value="firma">Firmă</option>
+          </select>
+          <select
+            value={filters.status}
+            onChange={(e) => setFilters({...filters, status: e.target.value})}
+          >
+            <option value="">Toate statusurile</option>
+            <option value="activ">Activ</option>
+            <option value="inactiv">Inactiv</option>
+          </select>
+          <button 
+            className="btn btn-text"
+            onClick={() => setFilters({ tip_client: '', judet: '', status: '' })}
+          >
+            Resetează
+          </button>
+        </div>
+      )}
+
+      {/* Clienti Table */}
       {loading ? (
-        <LoadingMessage>⏳ Se încarcă clienții...</LoadingMessage>
+        <div className="page-loading">Se încarcă...</div>
       ) : clienti.length === 0 ? (
-        <EmptyMessage>
-          📭 Nu există clienți.
-          <br />
-          <AddButton onClick={openNewModal} style={{ marginTop: '20px' }}>
-            ➕ Adaugă primul client
-          </AddButton>
-        </EmptyMessage>
+        <div className="empty-state">
+          <Users size={48} />
+          <p>Nu există clienți</p>
+          <button className="btn btn-primary" onClick={handleCreate}>
+            <Plus size={20} />
+            Adaugă primul client
+          </button>
+        </div>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th>ID</Th>
-              <Th>Nume</Th>
-              <Th>Tip</Th>
-              <Th>CUI/CNP</Th>
-              <Th>Localitate</Th>
-              <Th>Telefon</Th>
-              <Th>Email</Th>
-              <Th>Acțiuni</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {clienti.map((client) => (
-              <tr key={client.id}>
-                <Td>{client.id}</Td>
-                <Td><strong>{client.nume}</strong></Td>
-                <Td>
-                  <Badge type={client.tip_client}>
-                    {client.tip_client === 'firma' ? '🏢 Firmă' : '👤 PF'}
-                  </Badge>
-                </Td>
-                <Td>{client.cui_cnp || '-'}</Td>
-                <Td>{client.localitate || '-'}</Td>
-                <Td>{client.telefon || '-'}</Td>
-                <Td>{client.email || '-'}</Td>
-                <Td>
-                  <ActionButton onClick={() => handleEdit(client)} color="#2196F3">
-                    ✏️
-                  </ActionButton>
-                  <ActionButton onClick={() => handleDelete(client.id)} color="#f44336">
-                    🗑️
-                  </ActionButton>
-                </Td>
+        <div className="table-container">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Tip</th>
+                <th>Nume</th>
+                <th>Telefon</th>
+                <th>Email</th>
+                <th>Localitate</th>
+                <th>Lucrări</th>
+                <th>Valoare Totală</th>
+                <th>Status</th>
+                <th>Acțiuni</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {clienti.map((client) => (
+                <tr key={client.id}>
+                  <td>
+                    {client.tip_client === 'firma' ? (
+                      <Building2 size={18} color="#3b82f6" />
+                    ) : (
+                      <User size={18} color="#8b5cf6" />
+                    )}
+                  </td>
+                  <td>
+                    <strong>{client.nume}</strong>
+                    {client.cui && <div className="text-muted">CUI: {client.cui}</div>}
+                  </td>
+                  <td>{client.telefon_primar}</td>
+                  <td>{client.email || '-'}</td>
+                  <td>{client.localitate || '-'}</td>
+                  <td>{client.numar_lucrari || 0}</td>
+                  <td>{formatCurrency(client.total_contracte || 0)}</td>
+                  <td>
+                    <span className={`badge ${client.status === 'activ' ? 'badge-success' : 'badge-gray'}`}>
+                      {client.status === 'activ' ? 'Activ' : 'Inactiv'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button 
+                        className="btn-icon"
+                        onClick={() => navigate(`/clienti/${client.id}`)}
+                        title="Vezi detalii"
+                      >
+                        <Eye size={18} />
+                      </button>
+                      <button 
+                        className="btn-icon"
+                        onClick={() => handleEdit(client)}
+                        title="Editează"
+                      >
+                        <Edit size={18} />
+                      </button>
+                      <button 
+                        className="btn-icon btn-icon-danger"
+                        onClick={() => handleDelete(client.id)}
+                        title="Șterge"
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
+      {/* Modal */}
       {showModal && (
-        <ModalOverlay onClick={closeModal}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalHeader>
-              <ModalTitle>
-                {editingClient ? '✏️ Editează Client' : '➕ Client Nou'}
-              </ModalTitle>
-              <CloseButton onClick={closeModal}>✖</CloseButton>
-            </ModalHeader>
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingClient ? 'Editează Client' : 'Client Nou'}</h2>
+              <button className="btn-icon" onClick={() => setShowModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSubmit} className="modal-body">
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Tip Client *</label>
+                  <select
+                    value={formData.tip_client}
+                    onChange={(e) => setFormData({...formData, tip_client: e.target.value})}
+                    required
+                  >
+                    <option value="persoana_fizica">Persoană Fizică</option>
+                    <option value="firma">Firmă</option>
+                  </select>
+                </div>
 
-            <Form onSubmit={handleSubmit}>
-              <FormGroup>
-                <Label>Nume *</Label>
-                <Input
-                  type="text"
-                  name="nume"
-                  value={formData.nume}
-                  onChange={handleInputChange}
-                  required
-                />
-              </FormGroup>
+                <div className="form-group">
+                  <label>Status</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  >
+                    <option value="activ">Activ</option>
+                    <option value="inactiv">Inactiv</option>
+                  </select>
+                </div>
 
-              <FormGroup>
-                <Label>Tip Client</Label>
-                <Select name="tip_client" value={formData.tip_client} onChange={handleInputChange}>
-                  <option value="persoana_fizica">👤 Persoană fizică</option>
-                  <option value="firma">🏢 Firmă</option>
-                </Select>
-              </FormGroup>
+                <div className="form-group full-width">
+                  <label>Nume / Denumire *</label>
+                  <input
+                    type="text"
+                    value={formData.nume}
+                    onChange={(e) => setFormData({...formData, nume: e.target.value})}
+                    required
+                  />
+                </div>
 
-              <FormGroup>
-                <Label>CUI/CNP</Label>
-                <Input type="text" name="cui_cnp" value={formData.cui_cnp} onChange={handleInputChange} />
-              </FormGroup>
+                {formData.tip_client === 'firma' && (
+                  <>
+                    <div className="form-group">
+                      <label>CUI</label>
+                      <input
+                        type="text"
+                        value={formData.cui}
+                        onChange={(e) => setFormData({...formData, cui: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Reg. Com.</label>
+                      <input
+                        type="text"
+                        value={formData.reg_com}
+                        onChange={(e) => setFormData({...formData, reg_com: e.target.value})}
+                      />
+                    </div>
+                  </>
+                )}
 
-              <FormGroup>
-                <Label>Telefon</Label>
-                <Input type="tel" name="telefon" value={formData.telefon} onChange={handleInputChange} />
-              </FormGroup>
+                <div className="form-group">
+                  <label>Telefon Primar *</label>
+                  <input
+                    type="tel"
+                    value={formData.telefon_primar}
+                    onChange={(e) => setFormData({...formData, telefon_primar: e.target.value})}
+                    required
+                  />
+                </div>
 
-              <FormGroup>
-                <Label>Email</Label>
-                <Input type="email" name="email" value={formData.email} onChange={handleInputChange} />
-              </FormGroup>
+                <div className="form-group">
+                  <label>Telefon Secundar</label>
+                  <input
+                    type="tel"
+                    value={formData.telefon_secundar}
+                    onChange={(e) => setFormData({...formData, telefon_secundar: e.target.value})}
+                  />
+                </div>
 
-              <FormGroup>
-                <Label>Adresă</Label>
-                <Input type="text" name="adresa" value={formData.adresa} onChange={handleInputChange} />
-              </FormGroup>
+                <div className="form-group full-width">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  />
+                </div>
 
-              <FormGroup>
-                <Label>Localitate</Label>
-                <Input type="text" name="localitate" value={formData.localitate} onChange={handleInputChange} />
-              </FormGroup>
+                <div className="form-group">
+                  <label>Localitate</label>
+                  <input
+                    type="text"
+                    value={formData.localitate}
+                    onChange={(e) => setFormData({...formData, localitate: e.target.value})}
+                  />
+                </div>
 
-              <FormGroup>
-                <Label>Județ</Label>
-                <Input type="text" name="judet" value={formData.judet} onChange={handleInputChange} />
-              </FormGroup>
+                <div className="form-group">
+                  <label>Județ</label>
+                  <input
+                    type="text"
+                    value={formData.judet}
+                    onChange={(e) => setFormData({...formData, judet: e.target.value})}
+                  />
+                </div>
 
-              <FormActions>
-                <CancelButton type="button" onClick={closeModal}>Anulează</CancelButton>
-                <SubmitButton type="submit">
-                  {editingClient ? '💾 Salvează' : '➕ Creează'}
-                </SubmitButton>
-              </FormActions>
-            </Form>
-          </ModalContent>
-        </ModalOverlay>
+                <div className="form-group full-width">
+                  <label>Observații</label>
+                  <textarea
+                    rows="3"
+                    value={formData.observatii}
+                    onChange={(e) => setFormData({...formData, observatii: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  Anulează
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  {editingClient ? 'Salvează' : 'Creează'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
-    </Container>
+    </div>
   );
 };
-
-const Container = styled.div`padding: 30px;`;
-const Header = styled.div`display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 20px;`;
-const Title = styled.h1`font-size: 32px; color: #333;`;
-const Actions = styled.div`display: flex; gap: 15px; align-items: center;`;
-const SearchBox = styled.input`padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; width: 250px; &:focus { outline: none; border-color: #667eea; }`;
-const AddButton = styled.button`padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; transition: transform 0.2s; &:hover { transform: translateY(-2px); }`;
-const LoadingMessage = styled.div`text-align: center; padding: 50px; font-size: 20px; color: #666;`;
-const EmptyMessage = styled.div`text-align: center; padding: 50px; font-size: 18px; color: #999;`;
-const Table = styled.table`width: 100%; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-collapse: collapse;`;
-const Th = styled.th`background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; font-weight: bold;`;
-const Td = styled.td`padding: 15px; border-bottom: 1px solid #f0f0f0;`;
-const Badge = styled.span`padding: 5px 12px; border-radius: 15px; font-size: 13px; font-weight: bold; background: ${p => p.type === 'firma' ? '#E3F2FD' : '#F3E5F5'}; color: ${p => p.type === 'firma' ? '#1976D2' : '#7B1FA2'};`;
-const ActionButton = styled.button`padding: 6px 12px; background: ${p => p.color}; color: white; border: none; border-radius: 5px; font-size: 13px; cursor: pointer; margin-right: 8px; &:hover { opacity: 0.8; }`;
-const ModalOverlay = styled.div`position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;`;
-const ModalContent = styled.div`background: white; border-radius: 15px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;`;
-const ModalHeader = styled.div`display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; border-bottom: 2px solid #f0f0f0;`;
-const ModalTitle = styled.h2`font-size: 24px; color: #333;`;
-const CloseButton = styled.button`background: none; border: none; font-size: 24px; cursor: pointer; color: #999; &:hover { color: #333; }`;
-const Form = styled.form`padding: 30px;`;
-const FormGroup = styled.div`margin-bottom: 15px;`;
-const Label = styled.label`display: block; margin-bottom: 8px; font-weight: bold; color: #555;`;
-const Input = styled.input`width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; &:focus { outline: none; border-color: #667eea; }`;
-const Select = styled.select`width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; &:focus { outline: none; border-color: #667eea; }`;
-const FormActions = styled.div`display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;`;
-const CancelButton = styled.button`padding: 12px 30px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; &:hover { background: #d0d0d0; }`;
-const SubmitButton = styled.button`padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; &:hover { transform: translateY(-2px); }`;
 
 export default Clienti;

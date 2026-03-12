@@ -1,37 +1,17 @@
 import React from 'react';
-import styled from 'styled-components';
+import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
-import Header from './Header';
+import './Layout.css';
 
-const Layout = ({ children }) => {
+const Layout = () => {
   return (
-    <LayoutContainer>
+    <div className="layout">
       <Sidebar />
-      <MainContent>
-        <Header />
-        <Content>{children}</Content>
-      </MainContent>
-    </LayoutContainer>
+      <div className="layout-content">
+        <Outlet />
+      </div>
+    </div>
   );
 };
-
-const LayoutContainer = styled.div`
-  display: flex;
-  min-height: 100vh;
-  background: #f5f5f5;
-`;
-
-const MainContent = styled.div`
-  flex: 1;
-  margin-left: 260px;
-  display: flex;
-  flex-direction: column;
-`;
-
-const Content = styled.main`
-  flex: 1;
-  padding: 0;
-  overflow-y: auto;
-`;
 
 export default Layout;

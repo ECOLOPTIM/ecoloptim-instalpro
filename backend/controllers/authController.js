@@ -1,180 +1,174 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { validationResult } = require('express-validator');
 const pool = require('../config/database');
-const { JWT_SECRET } = require('../middleware/auth');
 
-// REGISTER - Creare cont nou
-exports.register = async (req, res) => {
+const JWT_SECRET = process.env.JWT_SECRET || 'ecoloptim_secret_key_2024';
+const JWT_EXPIRATION = '24h';
+
+// Login
+const login = async (req, res) => {
   try {
-    // Validare input
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
+    const { username, password } = req.body;
+
+    console.log('🔐 Login attempt:', { username, password });
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username și parolă sunt obligatorii' });
     }
 
-    const { username, email, parola, nume_complet, telefon, rol } = req.body;
-
-    // Verifică dacă username există deja
-    const userCheck = await pool.query(
-      'SELECT id FROM utilizatori WHERE username = $1 OR email = $2',
-      [username, email]
-    );
-
-    if (userCheck.rows.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Username sau email există deja.'
-      });
-    }
-
-    // Hash parolă
-    const salt = await bcrypt.genSalt(10);
-    const parola_hash = await bcrypt.hash(parola, salt);
-
-    // Inserează user nou
-    const result = await pool.query(
-      `INSERT INTO utilizatori (username, email, parola_hash, nume_complet, telefon, rol) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
-       RETURNING id, username, email, rol, nume_complet, creat_la`,
-      [username, email, parola_hash, nume_complet, telefon, rol || 'user']
-    );
-
-    const user = result.rows[0];
-
-    // Generează JWT token
-    const token = jwt.sign(
-      { id: user.id, username: user.username, rol: user.rol },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Cont creat cu succes!',
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          rol: user.rol,
-          nume_complet: user.nume_complet
-        },
-        token
-      }
-    });
-
-  } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Eroare la crearea contului.',
-      error: error.message
-    });
-  }
-};
-
-// LOGIN - Autentificare
-exports.login = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        errors: errors.array()
-      });
-    }
-
-    const { username, parola } = req.body;
-
-    // Caută user
     const result = await pool.query(
       'SELECT * FROM utilizatori WHERE username = $1 AND activ = true',
       [username]
     );
 
+    console.log('👤 User found:', result.rows.length > 0);
+
     if (result.rows.length === 0) {
-      return res.status(401).json({
-        success: false,
-        message: 'Username sau parolă incorecte.'
-      });
+      return res.status(401).json({ message: 'Credențiale invalide' });
     }
 
     const user = result.rows[0];
+    console.log('🔑 Stored hash:', user.password);
+    console.log('🔑 Hash length:', user.password?.length);
 
-    // Verifică parola
-    const isMatch = await bcrypt.compare(parola, user.parola_hash);
+    const validPassword = await bcrypt.compare(password, user.password);
+    console.log('✅ Password valid:', validPassword);
 
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Username sau parolă incorecte.'
-      });
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Credențiale invalide' });
     }
 
-    // Generează JWT token
     const token = jwt.sign(
-      { id: user.id, username: user.username, rol: user.rol },
+      { 
+        id: user.id, 
+        username: user.username, 
+        rol: user.rol 
+      },
       JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: JWT_EXPIRATION }
     );
 
     res.json({
-      success: true,
-      message: 'Autentificare reușită!',
-      data: {
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          rol: user.rol,
-          nume_complet: user.nume_complet
-        },
-        token
+      token,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        nume_complet: user.nume_complet,
+        rol: user.rol
       }
     });
 
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Eroare la autentificare.',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Eroare la autentificare' });
   }
 };
 
-// GET PROFILE - Info user curent
-exports.getProfile = async (req, res) => {
+// Register
+const register = async (req, res) => {
+  try {
+    const { username, password, email, nume_complet, rol } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Username și parolă sunt obligatorii' });
+    }
+
+    const existingUser = await pool.query(
+      'SELECT * FROM utilizatori WHERE username = $1 OR email = $2',
+      [username, email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ message: 'Username sau email deja există' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const result = await pool.query(
+      'INSERT INTO utilizatori (username, password, email, nume_complet, rol, activ) VALUES ($1, $2, $3, $4, $5, true) RETURNING id, username, email, nume_complet, rol',
+      [username, hashedPassword, email, nume_complet, rol || 'user']
+    );
+
+    res.status(201).json({
+      message: 'Utilizator creat cu succes',
+      user: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ message: 'Eroare la înregistrare' });
+  }
+};
+
+// Get profile
+const getProfile = async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, username, email, rol, nume_complet, telefon, creat_la 
-       FROM utilizatori 
-       WHERE id = $1`,
+      'SELECT id, username, email, nume_complet, rol, created_at FROM utilizatori WHERE id = $1',
       [req.user.id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User nu a fost găsit.'
-      });
+      return res.status(404).json({ message: 'Utilizator negăsit' });
     }
 
-    res.json({
-      success: true,
-      data: result.rows[0]
-    });
+    res.json(result.rows[0]);
 
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Eroare la obținerea profilului.',
-      error: error.message
-    });
+    res.status(500).json({ message: 'Eroare la obținerea profilului' });
   }
+};
+
+// Update profile
+const updateProfile = async (req, res) => {
+  try {
+    const { email, nume_complet, password } = req.body;
+    const userId = req.user.id;
+
+    let query = 'UPDATE utilizatori SET ';
+    const values = [];
+    let paramCount = 1;
+
+    if (email) {
+      query += `email = $${paramCount}, `;
+      values.push(email);
+      paramCount++;
+    }
+
+    if (nume_complet) {
+      query += `nume_complet = $${paramCount}, `;
+      values.push(nume_complet);
+      paramCount++;
+    }
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      query += `password = $${paramCount}, `;
+      values.push(hashedPassword);
+      paramCount++;
+    }
+
+    query += `updated_at = CURRENT_TIMESTAMP WHERE id = $${paramCount} RETURNING id, username, email, nume_complet, rol`;
+    values.push(userId);
+
+    const result = await pool.query(query, values);
+
+    res.json({
+      message: 'Profil actualizat cu succes',
+      user: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Eroare la actualizarea profilului' });
+  }
+};
+
+module.exports = {
+  login,
+  register,
+  getProfile,
+  updateProfile
 };
