@@ -27,4 +27,10 @@ router.post('/login',
 // GET /api/auth/profile - Profil user (protejat)
 router.get('/profile', authMiddleware, authController.getProfile);
 
+// PUT /api/auth/profile - Actualizare profil
+router.put('/profile', authMiddleware, authController.updateProfile);
+
+// PUT /api/auth/password - Schimbare parolă
+router.put('/password', authMiddleware, authController.updatePassword);
+
 module.exports = router;
