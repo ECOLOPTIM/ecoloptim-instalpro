@@ -131,7 +131,7 @@ GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO ecoloptim_user;
 INSERT INTO utilizatori (username, password, email, nume_complet, rol, activ)
 VALUES (
     'admin',
-    '$2b$10$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36p5Yv6tGfJ4K4oN5M8u8P2',
+    '$2a$10$TCT7HzIIu/Hh2mL52q8QbuUP/6CQlVeF47Ktu0DCPogFWeliW65rG',
     'admin@ecoloptim.ro',
     'Administrator',
     'admin',
