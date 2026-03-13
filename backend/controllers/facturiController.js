@@ -12,7 +12,7 @@ const getAllFacturi = async (req, res) => {
         c.tip_client,
         l.numar_lucrare,
         l.nume_lucrare,
-        (f.valoare_totala - f.valoare_incasata) as rest_de_incasat
+        (f.valoare_totala - f.valoare_platita) as rest_de_incasat
       FROM facturi f
       LEFT JOIN clienti c ON f.client_id = c.id
       LEFT JOIN lucrari l ON f.lucrare_id = l.id
@@ -73,7 +73,7 @@ const getFacturaById = async (req, res) => {
         c.email as client_email,
         l.numar_lucrare,
         l.nume_lucrare,
-        (f.valoare_totala - f.valoare_incasata) as rest_de_incasat
+        (f.valoare_totala - f.valoare_platita) as rest_de_incasat
       FROM facturi f
       LEFT JOIN clienti c ON f.client_id = c.id
       LEFT JOIN lucrari l ON f.lucrare_id = l.id
@@ -259,13 +259,13 @@ const addPlata = async (req, res) => {
       [factura_id, data_plata, suma, modalitate_plata, numar_document, observatii]
     );
 
-    // Actualizează valoare încasată și status factură
+    // Actualizează valoare platită și status factură
     const updateResult = await db.query(
       `UPDATE facturi 
-       SET valoare_incasata = valoare_incasata + $1,
+       SET valoare_platita = valoare_platita + $1,
            status = CASE 
-             WHEN (valoare_incasata + $1) >= valoare_totala THEN 'incasata_integral'
-             WHEN (valoare_incasata + $1) > 0 THEN 'incasata_partial'
+             WHEN (valoare_platita + $1) >= valoare_totala THEN 'incasata'
+             WHEN (valoare_platita + $1) > 0 THEN 'partial_incasata'
              ELSE status
            END,
            updated_at = CURRENT_TIMESTAMP
@@ -280,7 +280,7 @@ const addPlata = async (req, res) => {
       await db.query(
         `UPDATE lucrari 
          SET valoare_incasata = (
-           SELECT COALESCE(SUM(valoare_incasata), 0) 
+           SELECT COALESCE(SUM(valoare_platita), 0) 
            FROM facturi 
            WHERE lucrare_id = $1
          )

@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Environment files (keep .env.example)
+.env
+backend/.env
+frontend/.env
+
+# Build output
+frontend/build/
+dist/
+
+# Logs
+*.log
+backend-logs.txt
+
+# OS generated files
+.DS_Store
+Thumbs.db

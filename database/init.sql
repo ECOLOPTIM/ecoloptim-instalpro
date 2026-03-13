@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS lucrari (
     data_finalizare_planificata DATE,
     data_finalizare_efectiva DATE,
     valoare_contract DECIMAL(15,2) DEFAULT 0,
+    valoare_incasata DECIMAL(15,2) DEFAULT 0,
     procent_finalizare INTEGER DEFAULT 0 CHECK (procent_finalizare >= 0 AND procent_finalizare <= 100),
     observatii TEXT,
     user_id INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL,
@@ -74,17 +75,20 @@ CREATE TABLE IF NOT EXISTS documente (
     id SERIAL PRIMARY KEY,
     lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
     tip_document VARCHAR(50) CHECK (tip_document IN ('contract', 'deviz', 'factura', 'proces_verbal', 'alte')),
-    nume_document VARCHAR(200) NOT NULL,
+    nume_fisier VARCHAR(200) NOT NULL,
     cale_fisier VARCHAR(500),
+    dimensiune_kb INTEGER,
     data_document DATE,
     observatii TEXT,
-    user_id INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL,
+    uploaded_by INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS facturi (
     id SERIAL PRIMARY KEY,
     numar_factura VARCHAR(50) UNIQUE NOT NULL,
+    tip_factura VARCHAR(20) DEFAULT 'factura' CHECK (tip_factura IN ('factura', 'proforma', 'chitanta')),
+    client_id INTEGER REFERENCES clienti(id) ON DELETE SET NULL,
     lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
     data_emitere DATE NOT NULL,
     data_scadenta DATE,
@@ -95,6 +99,28 @@ CREATE TABLE IF NOT EXISTS facturi (
     user_id INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS plati (
+    id SERIAL PRIMARY KEY,
+    factura_id INTEGER REFERENCES facturi(id) ON DELETE CASCADE,
+    data_plata DATE NOT NULL,
+    suma DECIMAL(15,2) NOT NULL,
+    modalitate_plata VARCHAR(50),
+    numar_document VARCHAR(100),
+    observatii TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS timeline_lucrari (
+    id SERIAL PRIMARY KEY,
+    lucrare_id INTEGER REFERENCES lucrari(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL,
+    actiune VARCHAR(100),
+    descriere TEXT,
+    status_vechi VARCHAR(30),
+    status_nou VARCHAR(30),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Grant privileges on all tables
@@ -131,10 +157,10 @@ VALUES
 ON CONFLICT (numar_lucrare) DO NOTHING;
 
 -- Insert demo facturi
-INSERT INTO facturi (numar_factura, lucrare_id, data_emitere, data_scadenta, valoare_totala, valoare_platita, status, user_id)
+INSERT INTO facturi (numar_factura, tip_factura, client_id, lucrare_id, data_emitere, data_scadenta, valoare_totala, valoare_platita, status, user_id)
 VALUES 
-    ('FACT-2024-001', 1, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '15 days', 9000.00, 9000.00, 'incasata', 1),
-    ('FACT-2024-002', 1, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '25 days', 6000.00, 0, 'neincasata', 1),
-    ('FACT-2024-003', 2, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '20 days', 25500.00, 0, 'neincasata', 1),
-    ('FACT-2024-004', 3, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '5 days', 12000.00, 12000.00, 'incasata', 1)
+    ('FACT-2024-001', 'factura', 1, 1, CURRENT_DATE - INTERVAL '15 days', CURRENT_DATE + INTERVAL '15 days', 9000.00, 9000.00, 'incasata', 1),
+    ('FACT-2024-002', 'factura', 1, 1, CURRENT_DATE - INTERVAL '5 days', CURRENT_DATE + INTERVAL '25 days', 6000.00, 0, 'neincasata', 1),
+    ('FACT-2024-003', 'factura', 2, 2, CURRENT_DATE - INTERVAL '10 days', CURRENT_DATE + INTERVAL '20 days', 25500.00, 0, 'neincasata', 1),
+    ('FACT-2024-004', 'factura', 3, 3, CURRENT_DATE - INTERVAL '30 days', CURRENT_DATE - INTERVAL '5 days', 12000.00, 12000.00, 'incasata', 1)
 ON CONFLICT (numar_factura) DO NOTHING;

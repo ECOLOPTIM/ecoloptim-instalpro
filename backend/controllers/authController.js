@@ -2,7 +2,13 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../config/database');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ecoloptim_secret_key_2024';
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET must be set in production');
+}
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET not set - using default insecure key. Set JWT_SECRET in your environment.');
+}
+const JWT_SECRET = process.env.JWT_SECRET || 'ecoloptim-secret-key-2024-super-secure';
 const JWT_EXPIRATION = '24h';
 
 // Login
@@ -10,7 +16,7 @@ const login = async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    console.log('🔐 Login attempt:', { username, password });
+    console.log('👤 Login attempt for user:', username);
 
     if (!username || !password) {
       return res.status(400).json({ message: 'Username și parolă sunt obligatorii' });
@@ -28,11 +34,8 @@ const login = async (req, res) => {
     }
 
     const user = result.rows[0];
-    console.log('🔑 Stored hash:', user.password);
-    console.log('🔑 Hash length:', user.password?.length);
 
     const validPassword = await bcrypt.compare(password, user.password);
-    console.log('✅ Password valid:', validPassword);
 
     if (!validPassword) {
       return res.status(401).json({ message: 'Credențiale invalide' });

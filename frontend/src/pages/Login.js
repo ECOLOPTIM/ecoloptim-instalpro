@@ -20,27 +20,19 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🔐 Form submitted!');
-    console.log('📝 Form data:', formData);
-    
     setError('');
     setLoading(true);
 
     try {
-      console.log('📡 Calling login...');
       const result = await login(formData.username, formData.password);
-      console.log('✅ Login result:', result);
 
       if (result.success) {
-        console.log('✅ Login successful, navigating...');
         navigate('/dashboard');
       } else {
-        console.log('❌ Login failed:', result.message);
         setError(result.message);
         setLoading(false);
       }
     } catch (err) {
-      console.error('❌ Exception:', err);
       setError('Eroare de conectare la server');
       setLoading(false);
     }

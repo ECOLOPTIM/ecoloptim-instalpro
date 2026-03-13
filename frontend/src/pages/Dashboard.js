@@ -1,26 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 import styled from 'styled-components';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    clienti: 0,
-    lucrari: 0,
-    materiale: 0,
-    angajati: 0
-  });
+  const [stats, setStats] = useState(null);
+  const [lucrariRecente, setLucrariRecente] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch real stats from API
-    // Deocamdată folosim date mock
-    setStats({
-      clienti: 15,
-      lucrari: 8,
-      materiale: 42,
-      angajati: 6
-    });
+    const fetchDashboard = async () => {
+      try {
+        const [statsRes, lucrariRes] = await Promise.all([
+          api.get('/dashboard/stats'),
+          api.get('/dashboard/lucrari-recente?limit=5')
+        ]);
+        setStats(statsRes.data);
+        setLucrariRecente(lucrariRes.data);
+      } catch (error) {
+        console.error('Error loading dashboard:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboard();
   }, []);
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('ro-RO', {
+      style: 'currency',
+      currency: 'RON',
+      minimumFractionDigits: 0
+    }).format(value || 0);
+  };
+
+  const getStatusLabel = (status) => {
+    const labels = {
+      oferta: 'Ofertă',
+      contract_semnat: 'Contract',
+      in_executie: 'În execuție',
+      finalizata: 'Finalizată',
+      suspendata: 'Suspendată',
+      anulata: 'Anulată'
+    };
+    return labels[status] || status;
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      oferta: '#f59e0b',
+      contract_semnat: '#3b82f6',
+      in_executie: '#8b5cf6',
+      finalizata: '#10b981',
+      suspendata: '#6b7280',
+      anulata: '#ef4444'
+    };
+    return colors[status] || '#6b7280';
+  };
+
+  if (loading) {
+    return (
+      <Container>
+        <div className="page-loading">Se încarcă...</div>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -29,68 +74,79 @@ const Dashboard = () => {
         <Welcome>Bun venit, <strong>{user?.nume_complet || user?.username}</strong>!</Welcome>
       </Header>
 
-      <StatsGrid>
-        <StatCard color="#4CAF50">
-          <StatIcon>���</StatIcon>
-          <StatNumber>{stats.clienti}</StatNumber>
-          <StatLabel>Clienți activi</StatLabel>
-        </StatCard>
+      {stats && (
+        <>
+          <StatsGrid>
+            <StatCard color="#4CAF50">
+              <StatIcon>👥</StatIcon>
+              <StatNumber>{stats.clienti?.total || 0}</StatNumber>
+              <StatLabel>Clienți total</StatLabel>
+              <StatSub>{stats.clienti?.activi || 0} activi</StatSub>
+            </StatCard>
 
-        <StatCard color="#2196F3">
-          <StatIcon>🏗️</StatIcon>
-          <StatNumber>{stats.lucrari}</StatNumber>
-          <StatLabel>Lucrări în curs</StatLabel>
-        </StatCard>
+            <StatCard color="#2196F3">
+              <StatIcon>🏗️</StatIcon>
+              <StatNumber>{stats.lucrari?.in_executie || 0}</StatNumber>
+              <StatLabel>Lucrări în execuție</StatLabel>
+              <StatSub>{stats.lucrari?.total || 0} total</StatSub>
+            </StatCard>
 
-        <StatCard color="#FF9800">
-          <StatIcon>📦</StatIcon>
-          <StatNumber>{stats.materiale}</StatNumber>
-          <StatLabel>Materiale în stoc</StatLabel>
-        </StatCard>
+            <StatCard color="#FF9800">
+              <StatIcon>💰</StatIcon>
+              <StatNumber>{formatCurrency(stats.financiar?.valoare_totala_contracte)}</StatNumber>
+              <StatLabel>Valoare contracte</StatLabel>
+              <StatSub>{formatCurrency(stats.financiar?.valoare_totala_incasata)} încasată</StatSub>
+            </StatCard>
 
-        <StatCard color="#9C27B0">
-          <StatIcon>👷</StatIcon>
-          <StatNumber>{stats.angajati}</StatNumber>
-          <StatLabel>Angajați</StatLabel>
-        </StatCard>
-      </StatsGrid>
+            <StatCard color="#9C27B0">
+              <StatIcon>📄</StatIcon>
+              <StatNumber>{stats.facturi?.numar_facturi_neincasate || 0}</StatNumber>
+              <StatLabel>Facturi neîncasate</StatLabel>
+              <StatSub>{formatCurrency(stats.facturi?.valoare_neincasata)} de încasat</StatSub>
+            </StatCard>
+          </StatsGrid>
 
-      <Section>
-        <SectionTitle>📈 Activitate recentă</SectionTitle>
-        <ActivityList>
-          <ActivityItem>
-            <ActivityIcon>✅</ActivityIcon>
-            <ActivityText>
-              <strong>Lucrare finalizată:</strong> Instalație termică SC Test SRL
-            </ActivityText>
-            <ActivityTime>Acum 2 ore</ActivityTime>
-          </ActivityItem>
-          <ActivityItem>
-            <ActivityIcon>📝</ActivityIcon>
-            <ActivityText>
-              <strong>Client nou:</strong> Ion Popescu
-            </ActivityText>
-            <ActivityTime>Azi, 10:30</ActivityTime>
-          </ActivityItem>
-          <ActivityItem>
-            <ActivityIcon>📦</ActivityIcon>
-            <ActivityText>
-              <strong>Material primit:</strong> Țevi PVC D110 - 50ml
-            </ActivityText>
-            <ActivityTime>Ieri, 16:45</ActivityTime>
-          </ActivityItem>
-        </ActivityList>
-      </Section>
+          {stats.alerte?.termene_apropiate > 0 && (
+            <Section>
+              <SectionTitle>⚠️ Alerte</SectionTitle>
+              <NotificationBox type="warning">
+                <strong>Atenție:</strong> {stats.alerte.termene_apropiate} lucrări au termenul de finalizare în următoarele 30 zile
+              </NotificationBox>
+            </Section>
+          )}
+        </>
+      )}
 
-      <Section>
-        <SectionTitle>⚠️ Notificări</SectionTitle>
-        <NotificationBox type="warning">
-          <strong>Atenție:</strong> 3 materiale au stocul sub limita minimă
-        </NotificationBox>
-        <NotificationBox type="info">
-          <strong>Reminder:</strong> 2 lucrări au termenul de finalizare în următoarele 7 zile
-        </NotificationBox>
-      </Section>
+      {lucrariRecente.length > 0 && (
+        <Section>
+          <SectionTitle>🏗️ Lucrări Recente</SectionTitle>
+          <ActivityList>
+            {lucrariRecente.map((lucrare) => (
+              <ActivityItem key={lucrare.id}>
+                <div style={{ flex: 1 }}>
+                  <strong>{lucrare.numar_lucrare}</strong> — {lucrare.nume_lucrare}
+                  {lucrare.client_nume && <div style={{ color: '#666', fontSize: '13px' }}>{lucrare.client_nume}</div>}
+                </div>
+                <span
+                  className="badge"
+                  style={{
+                    backgroundColor: `${getStatusColor(lucrare.status)}20`,
+                    color: getStatusColor(lucrare.status),
+                    padding: '3px 10px',
+                    borderRadius: '12px',
+                    fontSize: '12px'
+                  }}
+                >
+                  {getStatusLabel(lucrare.status)}
+                </span>
+                <div style={{ color: '#999', fontSize: '13px', marginLeft: '12px' }}>
+                  {formatCurrency(lucrare.valoare_contract)}
+                </div>
+              </ActivityItem>
+            ))}
+          </ActivityList>
+        </Section>
+      )}
     </Container>
   );
 };
@@ -151,6 +207,12 @@ const StatNumber = styled.div`
 const StatLabel = styled.div`
   font-size: 16px;
   color: #666;
+`;
+
+const StatSub = styled.div`
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
 `;
 
 const Section = styled.div`

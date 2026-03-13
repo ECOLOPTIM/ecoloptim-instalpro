@@ -1,5 +1,13 @@
 const jwt = require('jsonwebtoken');
 
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('JWT_SECRET must be set in production');
+}
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET not set - using default insecure key. Set JWT_SECRET in your environment.');
+}
+const JWT_SECRET = process.env.JWT_SECRET || 'ecoloptim-secret-key-2024-super-secure';
+
 const authMiddleware = (req, res, next) => {
   try {
     // Extrage token din header
@@ -12,7 +20,7 @@ const authMiddleware = (req, res, next) => {
     const token = authHeader.split(' ')[1];
 
     // Verifică token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'ecoloptim-secret-key-2024-super-secure');
+    const decoded = jwt.verify(token, JWT_SECRET);
     
     // Adaugă user info în request
     req.user = {

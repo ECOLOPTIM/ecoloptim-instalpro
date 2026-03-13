@@ -8,6 +8,7 @@ router.use(authMiddleware);
 router.get('/', facturiController.getAllFacturi);
 router.get('/:id', facturiController.getFacturaById);
 router.post('/', facturiController.createFactura);
+router.post('/:factura_id/plata', facturiController.addPlata);
 router.put('/:id', facturiController.updateFactura);
 router.delete('/:id', facturiController.deleteFactura);
 
