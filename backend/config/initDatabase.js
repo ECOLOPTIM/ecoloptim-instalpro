@@ -133,9 +133,9 @@ async function initDatabase() {
 
     console.log('✅ Database schema ready');
 
-    // Seed admin user if not present
+    // Seed admin user if not present, or rehash password if not bcrypt
     const adminCheck = await pool.query(
-      'SELECT id FROM utilizatori WHERE username = $1',
+      'SELECT id, password FROM utilizatori WHERE username = $1',
       ['admin']
     );
 
@@ -148,6 +148,17 @@ async function initDatabase() {
         ['admin', hashedPassword, 'admin@ecoloptim.ro', 'Administrator', 'admin', true]
       );
       console.log('✅ Admin user created (username: admin)');
+    } else {
+      const existingPassword = adminCheck.rows[0].password;
+      if (!existingPassword || !existingPassword.startsWith('$2')) {
+        const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        await pool.query(
+          'UPDATE utilizatori SET password = $1 WHERE username = $2',
+          [hashedPassword, 'admin']
+        );
+        console.log('✅ Admin user password migrated to bcrypt hash');
+      }
     }
 
   } catch (error) {
