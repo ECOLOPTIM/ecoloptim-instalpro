@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
+const initDatabase = require('./config/initDatabase');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -59,12 +60,15 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Test database connection
+// Test database connection and initialize schema
 db.query('SELECT NOW()', (err, result) => {
   if (err) {
     console.error('❌ Database connection failed:', err);
   } else {
     console.log('✅ Database connected at:', result.rows[0].now);
+    initDatabase().catch(err => {
+      console.error('❌ Failed to initialize database schema. Authentication may not work:', err);
+    });
   }
 });
 
