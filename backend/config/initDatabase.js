@@ -131,6 +131,19 @@ async function initDatabase() {
       )
     `);
 
+    // Migrate existing tables: add columns that may be missing from older schema
+    await pool.query(`
+      ALTER TABLE lucrari ADD COLUMN IF NOT EXISTS valoare_incasata DECIMAL(15,2) DEFAULT 0
+    `);
+
+    await pool.query(`
+      ALTER TABLE documente ADD COLUMN IF NOT EXISTS uploaded_by INTEGER REFERENCES utilizatori(id) ON DELETE SET NULL
+    `);
+
+    await pool.query(`
+      ALTER TABLE facturi ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clienti(id) ON DELETE SET NULL
+    `);
+
     console.log('✅ Database schema ready');
 
     // Seed admin user if not present, or rehash password if not bcrypt
