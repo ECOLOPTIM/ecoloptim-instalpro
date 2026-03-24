@@ -61,6 +61,10 @@ const ClientDetalii = () => {
   if (error) return <div className="page"><div className="empty-state"><p>{error}</p></div></div>;
   if (!client) return null;
 
+  const hasAddress = client.adresa_strada || client.adresa_numar || client.adresa_bloc ||
+    client.adresa_scara || client.adresa_apartament || client.localitate ||
+    client.judet || client.cod_postal;
+
   return (
     <div className="page">
       <div className="page-header">
@@ -116,7 +120,7 @@ const ClientDetalii = () => {
         </div>
 
         {/* Address Card */}
-        {(client.localitate || client.judet) && (
+        {hasAddress && (
           <div className="detail-card">
             <h3><MapPin size={20} /> Adresă</h3>
             <div className="detail-rows">
