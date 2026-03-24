@@ -375,6 +375,51 @@ const Clienti = () => {
                   />
                 </div>
 
+                <div className="form-group full-width">
+                  <label>Stradă</label>
+                  <input
+                    type="text"
+                    value={formData.adresa_strada}
+                    onChange={(e) => setFormData({...formData, adresa_strada: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Număr</label>
+                  <input
+                    type="text"
+                    value={formData.adresa_numar}
+                    onChange={(e) => setFormData({...formData, adresa_numar: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Bloc</label>
+                  <input
+                    type="text"
+                    value={formData.adresa_bloc}
+                    onChange={(e) => setFormData({...formData, adresa_bloc: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Scară</label>
+                  <input
+                    type="text"
+                    value={formData.adresa_scara}
+                    onChange={(e) => setFormData({...formData, adresa_scara: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Apartament</label>
+                  <input
+                    type="text"
+                    value={formData.adresa_apartament}
+                    onChange={(e) => setFormData({...formData, adresa_apartament: e.target.value})}
+                  />
+                </div>
+
                 <div className="form-group">
                   <label>Localitate</label>
                   <input
@@ -390,6 +435,15 @@ const Clienti = () => {
                     type="text"
                     value={formData.judet}
                     onChange={(e) => setFormData({...formData, judet: e.target.value})}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Cod Poștal</label>
+                  <input
+                    type="text"
+                    value={formData.cod_postal}
+                    onChange={(e) => setFormData({...formData, cod_postal: e.target.value})}
                   />
                 </div>
 
